@@ -7,6 +7,7 @@ struct AlarmEditView: View {
     @State private var selectedExercise: ExerciseType = .pushUps
     @State private var requiredReps = 10
     @State private var label = ""
+    @State private var selectedSound: AlarmSound = .classic
 
     var body: some View {
         NavigationStack {
@@ -38,6 +39,23 @@ struct AlarmEditView: View {
                     }
                 }
 
+                Section("Sound") {
+                    Picker("Sound", selection: $selectedSound) {
+                        ForEach(AlarmSound.allCases) { sound in
+                            Label(sound.rawValue, systemImage: sound.icon)
+                                .tag(sound)
+                        }
+                    }
+                    .pickerStyle(.inline)
+
+                    Button {
+                        selectedSound.preview()
+                    } label: {
+                        Label("Preview", systemImage: "play.circle")
+                    }
+                    .foregroundStyle(.orange)
+                }
+
                 Section("Label") {
                     TextField("Alarm label", text: $label, prompt: Text("Morning Workout"))
                 }
@@ -54,7 +72,8 @@ struct AlarmEditView: View {
                             time: selectedTime,
                             exerciseType: selectedExercise,
                             requiredReps: requiredReps,
-                            label: label.isEmpty ? "Alarm" : label
+                            label: label.isEmpty ? "Alarm" : label,
+                            sound: selectedSound
                         )
                         dismiss()
                     }

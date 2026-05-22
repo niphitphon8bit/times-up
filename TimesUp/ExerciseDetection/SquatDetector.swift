@@ -6,58 +6,45 @@ struct SquatDetector: ExerciseDetector {
     private var phase: Phase = .unknown
     private(set) var repCount = 0
     private(set) var isInPosition = false
-    private var angleHistory: [Double] = []
+    private var metricHistory: [Double] = []
     private let smoothingWindow = 5
-    private let squatThreshold: Double = 100
-    private let standThreshold: Double = 160
+    // hip-drop ratio: (hip.y - knee.y) / (knee.y - ankle.y) in Vision coords (y increases upward)
+    // Standing ≈ 1.0 (hip well above knee); squatting ≈ 0 or negative (hip near/below knee).
+    private let squatThreshold: Double = 0.35
+    private let standThreshold: Double = 0.85
     private let holdFramesRequired = 3
     private var framesInCurrentState = 0
 
     mutating func processObservation(_ observation: VNHumanBodyPoseObservation) -> Int {
-        let positions = extractPositions(from: observation)
-
-        guard let kneeAngle = computeKneeAngle(positions: positions) else {
+        let positions = PoseDetectionService.extractJointPositions(from: observation)
+        guard let metric = computeHipDropRatio(positions: positions) else {
             isInPosition = false
             return repCount
         }
-
         isInPosition = true
-        angleHistory.append(kneeAngle)
-        if angleHistory.count > smoothingWindow {
-            angleHistory.removeFirst()
-        }
+        return processMetric(metric)
+    }
 
-        let smoothedAngle = angleHistory.reduce(0, +) / Double(angleHistory.count)
+    mutating func processMetric(_ ratio: Double) -> Int {
+        metricHistory.append(ratio)
+        if metricHistory.count > smoothingWindow { metricHistory.removeFirst() }
+        let smoothed = metricHistory.reduce(0, +) / Double(metricHistory.count)
 
         switch phase {
         case .unknown:
-            if smoothedAngle > standThreshold {
-                phase = .standing
-                framesInCurrentState = 0
-            }
+            if smoothed > standThreshold { phase = .standing; framesInCurrentState = 0 }
 
         case .standing:
-            if smoothedAngle < squatThreshold {
+            if smoothed < squatThreshold {
                 framesInCurrentState += 1
-                if framesInCurrentState >= holdFramesRequired {
-                    phase = .squatting
-                    framesInCurrentState = 0
-                }
-            } else {
-                framesInCurrentState = 0
-            }
+                if framesInCurrentState >= holdFramesRequired { phase = .squatting; framesInCurrentState = 0 }
+            } else { framesInCurrentState = 0 }
 
         case .squatting:
-            if smoothedAngle > standThreshold {
+            if smoothed > standThreshold {
                 framesInCurrentState += 1
-                if framesInCurrentState >= holdFramesRequired {
-                    phase = .standing
-                    repCount += 1
-                    framesInCurrentState = 0
-                }
-            } else {
-                framesInCurrentState = 0
-            }
+                if framesInCurrentState >= holdFramesRequired { phase = .standing; repCount += 1; framesInCurrentState = 0 }
+            } else { framesInCurrentState = 0 }
         }
 
         return repCount
@@ -67,28 +54,30 @@ struct SquatDetector: ExerciseDetector {
         phase = .unknown
         repCount = 0
         isInPosition = false
-        angleHistory = []
+        metricHistory = []
         framesInCurrentState = 0
     }
 
-    private func computeKneeAngle(positions: [VNHumanBodyPoseObservation.JointName: CGPoint]) -> Double? {
-        // Try right side first, then left
-        if let hip = positions[.rightHip],
-           let knee = positions[.rightKnee],
-           let ankle = positions[.rightAnkle] {
-            return PoseDetectionService.angle(at: knee, from: hip, to: ankle)
+    // Averages the hip-drop ratio across both legs when both are visible.
+    private func computeHipDropRatio(positions: [VNHumanBodyPoseObservation.JointName: CGPoint]) -> Double? {
+        typealias JN = VNHumanBodyPoseObservation.JointName
+        var ratios: [Double] = []
+
+        let sides: [(JN, JN, JN)] = [
+            (.rightHip, .rightKnee, .rightAnkle),
+            (.leftHip,  .leftKnee,  .leftAnkle)
+        ]
+
+        for (hipKey, kneeKey, ankleKey) in sides {
+            guard let hip   = positions[hipKey],
+                  let knee  = positions[kneeKey],
+                  let ankle = positions[ankleKey] else { continue }
+            let lowerLeg = knee.y - ankle.y
+            guard lowerLeg > 0.01 else { continue }
+            ratios.append((hip.y - knee.y) / lowerLeg)
         }
 
-        if let hip = positions[.leftHip],
-           let knee = positions[.leftKnee],
-           let ankle = positions[.leftAnkle] {
-            return PoseDetectionService.angle(at: knee, from: hip, to: ankle)
-        }
-
-        return nil
-    }
-
-    private func extractPositions(from observation: VNHumanBodyPoseObservation) -> [VNHumanBodyPoseObservation.JointName: CGPoint] {
-        PoseDetectionService.extractJointPositions(from: observation)
+        guard !ratios.isEmpty else { return nil }
+        return ratios.reduce(0, +) / Double(ratios.count)
     }
 }

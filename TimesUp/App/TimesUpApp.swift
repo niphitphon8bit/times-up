@@ -12,12 +12,15 @@ struct TimesUpApp: App {
                 .task {
                     await NotificationService.shared.requestAuthorization()
                 }
+                .environment(appDelegate.appState)
         }
         .modelContainer(for: Alarm.self)
     }
 }
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    let appState = AppState()
+
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
@@ -30,12 +33,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
-        let alarmId = notification.request.identifier
-        NotificationCenter.default.post(
-            name: .alarmTriggered,
-            object: nil,
-            userInfo: ["alarmId": alarmId]
-        )
+        await MainActor.run { appState.pendingAlarmId = notification.request.identifier }
         return [.sound, .banner]
     }
 
@@ -43,11 +41,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        let alarmId = response.notification.request.identifier
-        NotificationCenter.default.post(
-            name: .alarmTriggered,
-            object: nil,
-            userInfo: ["alarmId": alarmId]
-        )
+        await MainActor.run { appState.pendingAlarmId = response.notification.request.identifier }
     }
 }

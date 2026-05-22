@@ -14,53 +14,36 @@ struct PushUpDetector: ExerciseDetector {
     private var framesInCurrentState = 0
 
     mutating func processObservation(_ observation: VNHumanBodyPoseObservation) -> Int {
-        let positions = extractPositions(from: observation)
-
-        guard let elbowAngle = computeElbowAngle(positions: positions) else {
+        let positions = PoseDetectionService.extractJointPositions(from: observation)
+        guard let angle = computeElbowAngle(positions: positions) else {
             isInPosition = false
             return repCount
         }
-
         isInPosition = true
-        angleHistory.append(elbowAngle)
-        if angleHistory.count > smoothingWindow {
-            angleHistory.removeFirst()
-        }
+        return processAngle(angle)
+    }
 
+    mutating func processAngle(_ elbowAngle: Double) -> Int {
+        angleHistory.append(elbowAngle)
+        if angleHistory.count > smoothingWindow { angleHistory.removeFirst() }
         let smoothedAngle = angleHistory.reduce(0, +) / Double(angleHistory.count)
 
         switch phase {
         case .unknown:
-            if smoothedAngle > upThreshold {
-                phase = .up
-                framesInCurrentState = 0
-            } else if smoothedAngle < downThreshold {
-                phase = .down
-                framesInCurrentState = 0
-            }
+            if smoothedAngle > upThreshold { phase = .up; framesInCurrentState = 0 }
+            else if smoothedAngle < downThreshold { phase = .down; framesInCurrentState = 0 }
 
         case .up:
             if smoothedAngle < downThreshold {
                 framesInCurrentState += 1
-                if framesInCurrentState >= holdFramesRequired {
-                    phase = .down
-                    framesInCurrentState = 0
-                }
-            } else {
-                framesInCurrentState = 0
-            }
+                if framesInCurrentState >= holdFramesRequired { phase = .down; framesInCurrentState = 0 }
+            } else { framesInCurrentState = 0 }
 
         case .down:
             if smoothedAngle > upThreshold {
                 framesInCurrentState += 1
-                if framesInCurrentState >= holdFramesRequired {
-                    phase = .up
-                    repCount += 1
-                    framesInCurrentState = 0
-                }
-            } else {
-                framesInCurrentState = 0
-            }
+                if framesInCurrentState >= holdFramesRequired { phase = .up; repCount += 1; framesInCurrentState = 0 }
+            } else { framesInCurrentState = 0 }
         }
 
         return repCount
@@ -74,24 +57,25 @@ struct PushUpDetector: ExerciseDetector {
         framesInCurrentState = 0
     }
 
+    // Averages both elbows when both are detected for a more stable measurement.
     private func computeElbowAngle(positions: [VNHumanBodyPoseObservation.JointName: CGPoint]) -> Double? {
-        // Try right side first, then left
+        var angles: [Double] = []
+
         if let shoulder = positions[.rightShoulder],
-           let elbow = positions[.rightElbow],
-           let wrist = positions[.rightWrist] {
-            return PoseDetectionService.angle(at: elbow, from: shoulder, to: wrist)
+           let elbow    = positions[.rightElbow],
+           let wrist    = positions[.rightWrist] {
+            angles.append(PoseDetectionService.angle(at: elbow, from: shoulder, to: wrist))
         }
 
         if let shoulder = positions[.leftShoulder],
-           let elbow = positions[.leftElbow],
-           let wrist = positions[.leftWrist] {
-            return PoseDetectionService.angle(at: elbow, from: shoulder, to: wrist)
+           let elbow    = positions[.leftElbow],
+           let wrist    = positions[.leftWrist] {
+            angles.append(PoseDetectionService.angle(at: elbow, from: shoulder, to: wrist))
         }
 
-        return nil
+        guard !angles.isEmpty else { return nil }
+        return angles.reduce(0, +) / Double(angles.count)
     }
 
-    private func extractPositions(from observation: VNHumanBodyPoseObservation) -> [VNHumanBodyPoseObservation.JointName: CGPoint] {
-        PoseDetectionService.extractJointPositions(from: observation)
-    }
+
 }

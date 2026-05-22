@@ -16,3 +16,31 @@ targets:
       path: TimesUp/Info.plist
       properties:
         UILaunchScreen: {}
+        NSCameraUsageDescription: "Times Up uses the camera to detect your exercise movements so it can count reps and dismiss the alarm."
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  TimesUpTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: TimesUpTests
+    dependencies:
+      - target: TimesUp
+    settings:
+      SWIFT_VERSION: "5.9"
+      PRODUCT_BUNDLE_IDENTIFIER: com.timesup.alarm.tests
+      GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  TimesUp:
+    build:
+      targets:
+        TimesUp: all
+        TimesUpTests: [test]
+    test:
+      targets:
+        - TimesUpTests

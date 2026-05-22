@@ -1,0 +1,58 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <title>TimesUp app icon</title>
+  <desc>Dark alarm clock app icon with purple accents. Wake up and complete an activity to dismiss.</desc>
+
+  <defs>
+    <clipPath id="iconClip">
+      <rect x="0" y="0" width="1024" height="1024" rx="224"/>
+    </clipPath>
+  </defs>
+
+  <rect x="0" y="0" width="1024" height="1024" rx="224" fill="#0D0D12"/>
+  <rect x="0" y="0" width="1024" height="1024" rx="224" fill="none" stroke="#3C3489" stroke-width="3"/>
+
+  <!-- Clock body -->
+  <circle cx="512" cy="470" r="220" fill="#1A1826" stroke="#534AB7" stroke-width="4"/>
+  <circle cx="512" cy="470" r="220" fill="none" stroke="#26215C" stroke-width="28"/>
+  <circle cx="512" cy="470" r="192" fill="none" stroke="#534AB7" stroke-width="3" stroke-dasharray="5 10"/>
+
+  <!-- Hour markers -->
+  <circle cx="512" cy="262" r="9" fill="#7F77DD"/>
+  <circle cx="512" cy="678" r="9" fill="#7F77DD"/>
+  <circle cx="304" cy="470" r="9" fill="#7F77DD"/>
+  <circle cx="720" cy="470" r="9" fill="#7F77DD"/>
+
+  <!-- Hour hand -->
+  <line x1="512" y1="470" x2="512" y2="320" stroke="white" stroke-width="11" stroke-linecap="round"/>
+  <!-- Minute hand -->
+  <line x1="512" y1="470" x2="603" y2="526" stroke="#7F77DD" stroke-width="8" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="512" cy="470" r="15" fill="white"/>
+
+  <!-- Bell ears -->
+  <line x1="392" y1="256" x2="370" y2="222" stroke="#534AB7" stroke-width="8" stroke-linecap="round"/>
+  <line x1="370" y1="222" x2="346" y2="232" stroke="#534AB7" stroke-width="8" stroke-linecap="round"/>
+  <line x1="632" y1="256" x2="654" y2="222" stroke="#534AB7" stroke-width="8" stroke-linecap="round"/>
+  <line x1="654" y1="222" x2="678" y2="232" stroke="#534AB7" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Activity wave -->
+  <path d="M390 660 Q430 695 475 680 Q505 668 525 685 Q558 710 600 695" fill="none" stroke="#AFA9EC" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Activity icons row -->
+  <!-- Heart rate icon -->
+  <circle cx="400" cy="790" r="26" fill="#534AB7"/>
+  <path d="M390 790 l6 -8 l5 8 l5 -5 l5 8" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Steps icon -->
+  <circle cx="474" cy="790" r="26" fill="#3C3489"/>
+  <line x1="463" y1="782" x2="485" y2="798" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <line x1="463" y1="798" x2="485" y2="782" stroke="white" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Math icon -->
+  <circle cx="548" cy="790" r="26" fill="#534AB7"/>
+  <text x="548" y="797" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" font-weight="700" fill="white">?</text>
+
+  <!-- Text -->
+  <text x="512" y="890" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="white" letter-spacing="4">TIMESUP</text>
+  <text x="512" y="930" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="400" fill="#7F77DD" letter-spacing="8">WAKE UP · MOVE</text>
+</svg>

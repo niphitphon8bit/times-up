@@ -25,7 +25,7 @@ final class PoseDetectionService {
 
     static func extractJointPositions(
         from observation: VNHumanBodyPoseObservation,
-        minimumConfidence: Float = 0.3
+        minimumConfidence: Float = 0.15
     ) -> JointPositions {
         var positions: JointPositions = [:]
 

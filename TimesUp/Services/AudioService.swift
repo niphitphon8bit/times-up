@@ -6,24 +6,14 @@ final class AudioService {
     private var audioPlayer: AVAudioPlayer?
     private var isPlaying = false
 
-    private init() {
-        configureAudioSession()
-    }
+    private init() {}
 
-    private func configureAudioSession() {
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
-            try AVAudioSession.sharedInstance().setActive(true)
-        } catch {
-            print("Failed to configure audio session: \(error)")
-        }
-    }
-
-    func startAlarmSound() {
+    func startAlarmSound(_ sound: AlarmSound = .classic) {
+        activateAudioSession()
         isPlaying = true
 
         guard let url = Bundle.main.url(forResource: "alarm_sound", withExtension: "caf") else {
-            startSystemSound()
+            playSystemAlert(sound)
             return
         }
 
@@ -33,19 +23,15 @@ final class AudioService {
             audioPlayer?.volume = 1.0
             audioPlayer?.play()
         } catch {
-            startSystemSound()
+            playSystemAlert(sound)
         }
     }
 
-    private func startSystemSound() {
-        playSystemAlert()
-    }
-
-    private func playSystemAlert() {
+    private func playSystemAlert(_ sound: AlarmSound) {
         guard isPlaying else { return }
-        AudioServicesPlayAlertSound(SystemSoundID(1005))
+        AudioServicesPlayAlertSound(sound.systemSoundID)
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            self?.playSystemAlert()
+            self?.playSystemAlert(sound)
         }
     }
 
@@ -53,5 +39,23 @@ final class AudioService {
         isPlaying = false
         audioPlayer?.stop()
         audioPlayer = nil
+        deactivateAudioSession()
+    }
+
+    private func activateAudioSession() {
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("[AudioService] Failed to activate audio session: \(error)")
+        }
+    }
+
+    private func deactivateAudioSession() {
+        do {
+            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("[AudioService] Failed to deactivate audio session: \(error)")
+        }
     }
 }

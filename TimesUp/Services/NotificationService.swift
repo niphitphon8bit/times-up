@@ -5,6 +5,7 @@ final class NotificationService {
     static let shared = NotificationService()
     private init() {}
 
+    @discardableResult
     func requestAuthorization() async -> Bool {
         do {
             return try await UNUserNotificationCenter.current()
@@ -18,7 +19,7 @@ final class NotificationService {
         let content = UNMutableNotificationContent()
         content.title = "Times Up!"
         content.body = "\(alarm.label) — Do \(alarm.requiredReps) \(alarm.exerciseType.rawValue) to dismiss"
-        content.sound = .defaultRingtone
+        content.sound = alarm.sound.notificationSound
         content.interruptionLevel = .timeSensitive
         content.categoryIdentifier = "ALARM"
 
@@ -31,7 +32,11 @@ final class NotificationService {
             trigger: trigger
         )
 
-        UNUserNotificationCenter.current().add(request)
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error {
+                print("[NotificationService] Failed to schedule \(alarm.notificationIdentifier): \(error)")
+            }
+        }
     }
 
     func cancelAlarm(_ alarm: Alarm) {

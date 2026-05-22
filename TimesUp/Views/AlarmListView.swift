@@ -3,6 +3,7 @@ import SwiftData
 
 struct AlarmListView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AppState.self) private var appState
     @Query(sort: \Alarm.time) private var alarms: [Alarm]
     @State private var showingAddAlarm = false
     @State private var activeAlarm: Alarm?
@@ -33,11 +34,18 @@ struct AlarmListView: View {
             .fullScreenCover(item: $activeAlarm) { alarm in
                 ChallengeView(alarm: alarm)
             }
-            .onReceive(NotificationCenter.default.publisher(for: .alarmTriggered)) { notification in
-                if let alarmId = notification.userInfo?["alarmId"] as? String,
-                   let alarm = alarms.first(where: { $0.id.uuidString == alarmId }) {
-                    activeAlarm = alarm
-                }
+            .onChange(of: appState.pendingAlarmId) { _, alarmId in
+                guard let alarmId,
+                      let alarm = alarms.first(where: { $0.id.uuidString == alarmId }) else { return }
+                activeAlarm = alarm
+                appState.pendingAlarmId = nil
+            }
+            // Handles launch-from-notification: pendingAlarmId is set before @Query populates
+            .onChange(of: alarms) { _, newAlarms in
+                guard let alarmId = appState.pendingAlarmId,
+                      let alarm = newAlarms.first(where: { $0.id.uuidString == alarmId }) else { return }
+                activeAlarm = alarm
+                appState.pendingAlarmId = nil
             }
         }
     }
@@ -60,18 +68,37 @@ struct AlarmListView: View {
         List {
             ForEach(alarms) { alarm in
                 AlarmRow(alarm: alarm) {
-                    let vm = AlarmListViewModel(modelContext: modelContext)
-                    vm.toggleAlarm(alarm)
+                    toggleAlarm(alarm)
                 }
             }
             .onDelete { indexSet in
-                let vm = AlarmListViewModel(modelContext: modelContext)
                 for index in indexSet {
-                    vm.deleteAlarm(alarms[index])
+                    deleteAlarm(alarms[index])
                 }
             }
         }
         .listStyle(.plain)
+    }
+
+    private func toggleAlarm(_ alarm: Alarm) {
+        alarm.isEnabled.toggle()
+        save()
+        if alarm.isEnabled {
+            NotificationService.shared.scheduleAlarm(alarm)
+        } else {
+            NotificationService.shared.cancelAlarm(alarm)
+        }
+    }
+
+    private func deleteAlarm(_ alarm: Alarm) {
+        NotificationService.shared.cancelAlarm(alarm)
+        modelContext.delete(alarm)
+        save()
+    }
+
+    private func save() {
+        do { try modelContext.save() }
+        catch { print("[AlarmListView] Save failed: \(error)") }
     }
 }
 
@@ -102,8 +129,4 @@ struct AlarmRow: View {
         }
         .padding(.vertical, 4)
     }
-}
-
-extension Notification.Name {
-    static let alarmTriggered = Notification.Name("alarmTriggered")
 }

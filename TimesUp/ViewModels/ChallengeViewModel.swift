@@ -2,16 +2,19 @@ import AVFoundation
 import CoreMedia
 import Vision
 import Observation
+import UIKit
 
 @Observable
 final class ChallengeViewModel: NSObject {
     let alarm: Alarm
     var completedReps = 0
-    var requiredReps: Int
+    var requiredReps: Int { alarm.requiredReps }
     var isComplete = false
     var isInPosition = false
     var cameraPermissionDenied = false
-    var exerciseType: ExerciseType
+    var cameraSetupFailed = false
+    var exerciseType: ExerciseType { alarm.exerciseType }
+    var detectedJoints: PoseDetectionService.JointPositions = [:]
     var progress: Double { min(Double(completedReps) / Double(requiredReps), 1.0) }
 
     private(set) var captureSession = AVCaptureSession()
@@ -24,13 +27,16 @@ final class ChallengeViewModel: NSObject {
 
     init(alarm: Alarm) {
         self.alarm = alarm
-        self.requiredReps = alarm.requiredReps
-        self.exerciseType = alarm.exerciseType
         self.exerciseDetector = ExerciseDetectorFactory.make(for: alarm.exerciseType)
         super.init()
     }
 
+    func startAlarmSound() {
+        AudioService.shared.startAlarmSound(alarm.sound)
+    }
+
     func startSession() {
+        UIApplication.shared.isIdleTimerDisabled = true
         checkCameraPermission { [weak self] granted in
             guard granted else {
                 Task { @MainActor in self?.cameraPermissionDenied = true }
@@ -38,10 +44,10 @@ final class ChallengeViewModel: NSObject {
             }
             self?.setupCamera()
         }
-        AudioService.shared.startAlarmSound()
     }
 
     func stopSession() {
+        UIApplication.shared.isIdleTimerDisabled = false
         captureSession.stopRunning()
         AudioService.shared.stopAlarmSound()
     }
@@ -65,6 +71,7 @@ final class ChallengeViewModel: NSObject {
         guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
               let input = try? AVCaptureDeviceInput(device: camera) else {
             captureSession.commitConfiguration()
+            Task { @MainActor in self.cameraSetupFailed = true }
             return
         }
 
@@ -98,18 +105,28 @@ extension ChallengeViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
         guard frameCount % 3 == 0 else { return }
 
         guard let observation = poseService.detectPose(in: sampleBuffer) else {
-            Task { @MainActor in self.isInPosition = false }
+            Task { @MainActor in
+                self.isInPosition = false
+                self.detectedJoints = [:]
+            }
             return
         }
 
+        let joints = PoseDetectionService.extractJointPositions(from: observation)
         let reps = exerciseDetector.processObservation(observation)
         let inPosition = exerciseDetector.isInPosition
 
         Task { @MainActor in
+            let didCountRep = reps > self.completedReps
             self.completedReps = reps
             self.isInPosition = inPosition
+            self.detectedJoints = joints
+            if didCountRep {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            }
             if reps >= self.requiredReps && !self.isComplete {
                 self.isComplete = true
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
                 self.stopSession()
             }
         }

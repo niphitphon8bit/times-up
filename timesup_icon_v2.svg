@@ -1,0 +1,51 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <title>TimesUp app icon</title>
+
+  <rect x="0" y="0" width="1024" height="1024" rx="224" fill="#0D0D12"/>
+
+  <!-- Outer glow ring -->
+  <circle cx="512" cy="512" r="390" fill="none" stroke="#26215C" stroke-width="42"/>
+  <!-- Clock face -->
+  <circle cx="512" cy="512" r="370" fill="#12101F"/>
+  <!-- Inner border -->
+  <circle cx="512" cy="512" r="370" fill="none" stroke="#534AB7" stroke-width="5"/>
+
+  <!-- Major tick marks -->
+  <line x1="512" y1="148" x2="512" y2="182" stroke="#7F77DD" stroke-width="8" stroke-linecap="round"/>
+  <line x1="512" y1="842" x2="512" y2="876" stroke="#7F77DD" stroke-width="8" stroke-linecap="round"/>
+  <line x1="148" y1="512" x2="182" y2="512" stroke="#7F77DD" stroke-width="8" stroke-linecap="round"/>
+  <line x1="842" y1="512" x2="876" y2="512" stroke="#7F77DD" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Minor ticks -->
+  <line x1="774" y1="250" x2="764" y2="270" stroke="#3C3489" stroke-width="5" stroke-linecap="round"/>
+  <line x1="876" y1="374" x2="856" y2="384" stroke="#3C3489" stroke-width="5" stroke-linecap="round"/>
+  <line x1="876" y1="650" x2="856" y2="640" stroke="#3C3489" stroke-width="5" stroke-linecap="round"/>
+  <line x1="774" y1="774" x2="764" y2="754" stroke="#3C3489" stroke-width="5" stroke-linecap="round"/>
+  <line x1="250" y1="774" x2="260" y2="754" stroke="#3C3489" stroke-width="5" stroke-linecap="round"/>
+  <line x1="148" y1="650" x2="168" y2="640" stroke="#3C3489" stroke-width="5" stroke-linecap="round"/>
+  <line x1="148" y1="374" x2="168" y2="384" stroke="#3C3489" stroke-width="5" stroke-linecap="round"/>
+  <line x1="250" y1="250" x2="260" y2="270" stroke="#3C3489" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Bell ears -->
+  <line x1="404" y1="268" x2="372" y2="224" stroke="#534AB7" stroke-width="14" stroke-linecap="round"/>
+  <line x1="372" y1="224" x2="336" y2="240" stroke="#534AB7" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="336" cy="240" r="14" fill="#534AB7"/>
+
+  <line x1="620" y1="268" x2="652" y2="224" stroke="#534AB7" stroke-width="14" stroke-linecap="round"/>
+  <line x1="652" y1="224" x2="688" y2="240" stroke="#534AB7" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="688" cy="240" r="14" fill="#534AB7"/>
+
+  <!-- Hour hand -->
+  <line x1="512" y1="512" x2="512" y2="310" stroke="white" stroke-width="20" stroke-linecap="round"/>
+  <!-- Minute hand -->
+  <line x1="512" y1="512" x2="650" y2="596" stroke="#AFA9EC" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Center dot -->
+  <circle cx="512" cy="512" r="24" fill="#534AB7"/>
+  <circle cx="512" cy="512" r="10" fill="white"/>
+
+  <!-- Vibration lines at bottom -->
+  <line x1="446" y1="856" x2="428" y2="890" stroke="#534AB7" stroke-width="10" stroke-linecap="round"/>
+  <line x1="512" y1="862" x2="512" y2="898" stroke="#534AB7" stroke-width="10" stroke-linecap="round"/>
+  <line x1="578" y1="856" x2="596" y2="890" stroke="#534AB7" stroke-width="10" stroke-linecap="round"/>
+</svg>
